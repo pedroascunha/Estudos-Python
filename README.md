@@ -1,111 +1,96 @@
-<h1 align="center">PyBank Next 💳</h1>
+<h1 align="center">PyBank Next 💳</h1> <p align="center"> Sistema bancário em Python utilizando <b>Programação Orientada a Objetos</b>, com foco em modelagem de domínio, encapsulamento e histórico de transações. </p> <p align="center"> <img src="https://img.shields.io/badge/Python-3.10%2B-blue" alt="Python 3.10+"> <img src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow" alt="Status"> </p>
+✨ Funcionalidades
+👤 Cadastro de clientes pessoas físicas com CPF, nome, data de nascimento e endereço.
+​
 
-<p align="center">
-  Sistema bancário modular em Python, focado em boas práticas, tipagem e uso de argumentos posicionais/nominais.
-</p>
+🏦 Criação de contas correntes vinculadas a um cliente, com agência, número e saldo.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.10%2B-blue" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow" alt="Status">
-</p>
+💰 Operações bancárias:
 
----
+Depósito em conta corrente.
 
-## ✨ Funcionalidades
+Saque com limite de valor por operação e limite de quantidade de saques.
 
-- 👤 Cadastro de usuários (clientes) com **validação de CPF único**
-- 🏦 Criação de contas correntes vinculadas a um usuário
-- 💰 Operações bancárias:
-  - Depósito (argumentos **apenas posicionais**)
-  - Saque (argumentos **apenas nomeados**)
-  - Extrato (saldo posicional, extrato keyword-only)
-- 📋 Listagem de contas cadastradas
-- 🔐 Controle de limite diário de saques e valor máximo por saque
-- 🕒 Registro de movimentações com data e hora no extrato
+Extrato com listagem das movimentações e saldo atual.
 
----
+📋 Listagem de contas cadastradas, exibindo agência, número, titular e saldo.
 
-## 🧱 Tecnologias utilizadas
+🕒 Registro de movimentações com data, hora, tipo e valor no histórico da conta.
 
-- Python 3.10+
-- `dataclasses` para modelar Usuário e ContaCorrente
-- Tipagem com `typing`
-- CLI (interface de linha de comando) via terminal
+🧱 Tecnologias e conceitos
+Python 3.10+
 
----
+Orientação a Objetos:
 
-## 🚀 Como executar
+Classes de domínio: Cliente, PessoaFisica, Conta, ContaCorrente, Historico.
 
-1. Certifique-se de ter o **Python 3.10 ou superior** instalado.
-2. Clone este repositório:
+Hierarquia de transações: classe abstrata Transacao e subclasses Deposito e Saque.
 
+Uso de @classmethod, herança e composição para modelar o sistema bancário.
+​
+
+CLI (interface de linha de comando) via terminal.
+
+🚀 Como executar
+Certifique-se de ter o Python 3.10 ou superior instalado.
+​
+
+Clone este repositório:
+
+bash
 git clone https://github.com/seu-usuario/pybank-next.git
 cd pybank-next
+Execute o script principal (ajuste o nome do arquivo, se necessário):
 
-texto
+bash
+python Banco_OO.py
+Use o menu interativo no terminal:
 
-3. Execute o script principal:
+text
+================ MENU ================
+[d] Depositar
+[s] Sacar
+[e] Extrato
+[nc] Nova conta
+[lc] Listar contas
+[nu] Novo usuário
+[q] Sair
+=> 
+🗂 Estrutura de classes
+Historico
 
-python pybank_next.py
+Armazena a lista de transações da conta e formata o extrato.
 
-texto
+Conta
 
-4. Use o menu interativo:
+Base para contas bancárias: saldo, numero, agencia, cliente, historico.
 
-───────────────────────────────
-PyBank Próximo 💳
-───────────────────────────────
-Criar usuárioCriar
-conta correnteListar
-contas
-Depósito
-Saque
-Extrato
-Sair
-───────────────────────────────
+ContaCorrente
 
-texto
+Herda de Conta e adiciona limite, limite_saques e controle de número de saques.
 
----
+Cliente
 
-## 🧪 Regras das funções principais
+Possui endereco e uma lista de contas.
 
-def saque(
-*, saldo, valor, extrato,
-limite, numero_saques, limite_saques
-):
-"""Saque - argumentos somente palavra-chave."""
+PessoaFisica
 
-texto
-undefined
-def deposito(saldo, valor, extrato, /):
-"""Depósito - argumentos posicionais apenas."""
+Herda de Cliente e adiciona nome, data_nascimento, cpf.
 
-texto
-undefined
-def extrato_(saldo, /, *, extrato):
-"""Extrato - saldo posicional, extrato somente palavra-chave."""
+Transacao (abstrata)
 
-texto
+Interface para operações com propriedade valor e método registrar.
 
-- `saque` → só aceita argumentos **nomeados**.  
-- `deposito` → só aceita argumentos **posicionais**.  
-- `extrato_` → mistura saldo posicional com extrato keyword-only.
+Deposito e Saque
 
----
+Implementam transações concretas, atualizando saldo e histórico.
 
-## 🗂 Estrutura de dados
+💡 Próximos passos (ideias)
+Persistir dados em arquivo (JSON/SQLite) ou banco de dados.
+​
 
-- `Usuario`
-  - `nome`, `nascimento`, `cpf` (apenas números), `endereco`
-- `ContaCorrente`
-  - `agencia`, `numero`, `usuario_cpf`, `saldo`, `extrato` (lista de strings), `num_saques`
+Permitir múltiplas contas por cliente na interface (escolha da conta ao transacionar).
 
----
+Separar o código em módulos (domínio, serviços, interface) para maior organização.
 
-## 💡 Próximos passos (ideias)
-
-- Persistir dados em arquivo (JSON/SQLite)
-- Autenticação por usuário/conta
-- Suporte a múltiplas agências
-- Testes automatizados com `pytest`
+Adicionar testes automatizados com pytest.
