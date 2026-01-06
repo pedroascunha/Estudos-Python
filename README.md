@@ -1,96 +1,118 @@
-<h1 align="center">PyBank Next 💳</h1> <p align="center"> Sistema bancário em Python utilizando <b>Programação Orientada a Objetos</b>, com foco em modelagem de domínio, encapsulamento e histórico de transações. </p> <p align="center"> <img src="https://img.shields.io/badge/Python-3.10%2B-blue" alt="Python 3.10+"> <img src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow" alt="Status"> </p>
-✨ Funcionalidades
-👤 Cadastro de clientes pessoas físicas com CPF, nome, data de nascimento e endereço.
+<h1 align="center">PyBank Next 💳</h1> <p align="center"> Sistema bancário em Python usando <b>Programação Orientada a Objetos</b>, com foco em modelagem de domínio, histórico de transações e boas práticas de código. </p> <p align="center"> <img src="https://img.shields.io/badge/Python-3.10%2B-blue" alt="Python 3.10+"> <img src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow" alt="Status"> </p>
+📚 Sobre o projeto
+O PyBank Next é um sistema bancário de linha de comando que permite cadastrar clientes, criar contas correntes e realizar operações financeiras básicas (depósito, saque e extrato) utilizando um modelo orientado a objetos.
 ​
 
-🏦 Criação de contas correntes vinculadas a um cliente, com agência, número e saldo.
+✨ Funcionalidades
+Cadastro de clientes pessoas físicas (nome, CPF, data de nascimento e endereço).
+​
 
-💰 Operações bancárias:
+Criação de contas correntes vinculadas a um cliente.
 
 Depósito em conta corrente.
 
-Saque com limite de valor por operação e limite de quantidade de saques.
+Saque com:
 
-Extrato com listagem das movimentações e saldo atual.
+Limite de valor por operação.
 
-📋 Listagem de contas cadastradas, exibindo agência, número, titular e saldo.
+Limite de quantidade de saques.
 
-🕒 Registro de movimentações com data, hora, tipo e valor no histórico da conta.
+Emissão de extrato com:
+
+Lista de transações (data, hora, tipo e valor).
+
+Exibição do saldo atual.
+
+Listagem de contas cadastradas (agência, número, titular e saldo).
 
 🧱 Tecnologias e conceitos
-Python 3.10+
+Linguagem: Python 3.10+
 
-Orientação a Objetos:
+Paradigma: Programação Orientada a Objetos
 
-Classes de domínio: Cliente, PessoaFisica, Conta, ContaCorrente, Historico.
+Conceitos aplicados:
 
-Hierarquia de transações: classe abstrata Transacao e subclasses Deposito e Saque.
+Classes de domínio (Cliente, PessoaFisica, Conta, ContaCorrente, Historico).
 
-Uso de @classmethod, herança e composição para modelar o sistema bancário.
+Classe abstrata de transações (Transacao) e implementações concretas (Deposito, Saque).
+
+Herança, composição, encapsulamento e métodos de classe (@classmethod).
 ​
 
-CLI (interface de linha de comando) via terminal.
+Interface: aplicação em modo texto (CLI) executada no terminal.
 
 🚀 Como executar
-Certifique-se de ter o Python 3.10 ou superior instalado.
+Verifique se o Python 3.10 ou superior está instalado na máquina.
 ​
 
-Clone este repositório:
+Clone o repositório e acesse a pasta do projeto:
 
 bash
 git clone https://github.com/seu-usuario/pybank-next.git
 cd pybank-next
-Execute o script principal (ajuste o nome do arquivo, se necessário):
+Execute o script principal (ajuste o nome se necessário):
 
 bash
 python Banco_OO.py
-Use o menu interativo no terminal:
+Interaja pelo menu exibido no terminal:
 
 text
 ================ MENU ================
-[d] Depositar
-[s] Sacar
-[e] Extrato
+[d]  Depositar
+[s]  Sacar
+[e]  Extrato
 [nc] Nova conta
 [lc] Listar contas
 [nu] Novo usuário
-[q] Sair
+[q]  Sair
 => 
-🗂 Estrutura de classes
+🗂 Estrutura de classes (resumo)
 Historico
 
-Armazena a lista de transações da conta e formata o extrato.
+Armazena as transações realizadas na conta.
+
+Gera o texto do extrato com data, tipo e valor.
 
 Conta
 
-Base para contas bancárias: saldo, numero, agencia, cliente, historico.
+Representa uma conta genérica com saldo, número, agência, cliente e histórico.
 
-ContaCorrente
+Possui operações básicas de depósito e saque.
 
-Herda de Conta e adiciona limite, limite_saques e controle de número de saques.
+ContaCorrente (Conta)
+
+Especialização de Conta com limite de valor por saque e limite de quantidade de saques.
 
 Cliente
 
-Possui endereco e uma lista de contas.
+Mantém endereço e lista de contas associadas.
 
-PessoaFisica
+PessoaFisica (Cliente)
 
-Herda de Cliente e adiciona nome, data_nascimento, cpf.
+Adiciona nome, data de nascimento e CPF.
 
 Transacao (abstrata)
 
-Interface para operações com propriedade valor e método registrar.
+Define a interface para operações (valor e registrar).
 
-Deposito e Saque
+Deposito / Saque (Transacao)
 
-Implementam transações concretas, atualizando saldo e histórico.
+Implementam a lógica de registrar depósitos e saques na conta e no histórico.
 
-💡 Próximos passos (ideias)
-Persistir dados em arquivo (JSON/SQLite) ou banco de dados.
+🛠 Estrutura do código
+Um possível layout de arquivos para o projeto:
+
+text
+pybank-next/
+├─ Banco_OO.py        # Script principal com o loop do menu
+├─ README.md          # Documentação do projeto
+└─ (futuros módulos)  # domínio/, services/, etc.
+💡 Próximos passos
+Persistir dados em arquivo (JSON/CSV/SQLite) para manter clientes e contas entre execuções.
 ​
 
-Permitir múltiplas contas por cliente na interface (escolha da conta ao transacionar).
+Permitir múltiplas contas por cliente na interface (escolha da conta ao operar).
 
-Separar o código em módulos (domínio, serviços, interface) para maior organização.
+Separar o código em módulos (domínio, serviços, interface) para facilitar manutenção e testes.
 
-Adicionar testes automatizados com pytest.
+Adicionar testes automatizados com pytest e integrar a um fluxo de CI.
