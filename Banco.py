@@ -2,13 +2,14 @@
 PyBank Next - Sistema bancário modular em Python.
 
 Funcionalidades:
-- Cadastro de usuários (clientes) com validação de CPF único
-- Criação de contas correntes vinculadas a usuários
-- Depósito, saque e extrato com regras de argumentos:
-    - saque: keyword-only
-    - depósito: positional-only
-    - extrato: saldo posicional, extrato keyword-only
-- Listagem de contas
+- Cadastro de usuários com CPF único
+- Criação de contas correntes
+- Depósito (positional-only)
+- Saque (keyword-only)
+- Extrato (saldo posicional, extrato keyword-only)
+- Decorador de log
+- Gerador de relatórios
+- Iterador personalizado de contas
 """
 
 from dataclasses import dataclass, field
@@ -18,15 +19,29 @@ from typing import List, Optional
 
 
 # ==========================
+# Decorador de log
+# ==========================
+
+def log_transacao(tipo_transacao: str):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            print(f"[LOG] {timestamp} - Transação: {tipo_transacao}")
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+# ==========================
 # Modelos de domínio
 # ==========================
 
 @dataclass
 class Usuario:
     nome: str
-    nascimento: str  # poderia ser datetime, mantido como string para simplicidade
-    cpf: str         # apenas números
-    endereco: str    # "logradouro, nro - bairro - cidade/UF"
+    nascimento: str
+    cpf: str
+    endereco: str
 
 
 @dataclass
@@ -73,15 +88,55 @@ def formatar_moeda(valor: float) -> str:
 
 
 # ==========================
-# Casos de uso principais
+# Gerador de relatórios
+# ==========================
+
+def gerador_transacoes(extrato: List[str], tipo: Optional[str] = None):
+    for transacao in extrato:
+        if tipo:
+            if tipo.lower() in transacao.lower():
+                yield transacao
+        else:
+            yield transacao
+
+
+# ==========================
+# Iterador personalizado
+# ==========================
+
+class ContaIterador:
+    def __init__(self, contas: List[ContaCorrente]):
+        self._contas = contas
+        self._indice = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._indice >= len(self._contas):
+            raise StopIteration
+
+        conta = self._contas[self._indice]
+        self._indice += 1
+
+        return {
+            "agencia": conta.agencia,
+            "numero": conta.numero,
+            "cpf": conta.usuario_cpf,
+            "saldo": conta.saldo,
+        }
+
+
+# ==========================
+# Casos de uso
 # ==========================
 
 def criar_usuario() -> None:
     print("\n=== Novo usuário ===")
     nome = input("Nome completo: ").strip()
     nascimento = input("Data de nascimento (dd/mm/aaaa): ").strip()
-    cpf_raw = input("CPF (apenas números): ").strip()
-    endereco = input("Endereço (logradouro, nro - bairro - cidade/UF): ").strip()
+    cpf_raw = input("CPF: ").strip()
+    endereco = input("Endereço: ").strip()
 
     cpf = limpar_cpf(cpf_raw)
 
@@ -93,38 +148,24 @@ def criar_usuario() -> None:
         print("✗ Já existe usuário com esse CPF.")
         return
 
-    usuario = Usuario(
-        nome=nome,
-        nascimento=nascimento,
-        cpf=cpf,
-        endereco=endereco,
-    )
-    USUARIOS.append(usuario)
+    USUARIOS.append(Usuario(nome, nascimento, cpf, endereco))
     print("✓ Usuário criado com sucesso.")
 
 
 def criar_conta_corrente() -> None:
     print("\n=== Nova conta corrente ===")
-    cpf_raw = input("Informe o CPF do usuário: ").strip()
+    cpf_raw = input("CPF do usuário: ").strip()
     usuario = encontrar_usuario_por_cpf(cpf_raw)
 
     if not usuario:
-        print("✗ Usuário não encontrado para esse CPF.")
+        print("✗ Usuário não encontrado.")
         return
 
     numero_conta = len(CONTAS) + 1
-
-    conta = ContaCorrente(
-        agencia=AGENCIA_PADRAO,
-        numero=numero_conta,
-        usuario_cpf=usuario.cpf,
-    )
+    conta = ContaCorrente(AGENCIA_PADRAO, numero_conta, usuario.cpf)
     CONTAS.append(conta)
 
-    print(
-        f"✓ Conta criada com sucesso.\n"
-        f"  Agência: {conta.agencia} | Conta: {conta.numero} | Titular: {usuario.nome}"
-    )
+    print(f"✓ Conta criada | Agência: {conta.agencia} | Conta: {conta.numero}")
 
 
 def listar_contas() -> None:
@@ -133,13 +174,15 @@ def listar_contas() -> None:
         print("Nenhuma conta cadastrada.")
         return
 
-    for conta in CONTAS:
-        usuario = encontrar_usuario_por_cpf(conta.usuario_cpf)
+    for info in ContaIterador(CONTAS):
+        usuario = encontrar_usuario_por_cpf(info["cpf"])
         nome = usuario.nome if usuario else "Usuário não encontrado"
+
         print(
-            f"Agência: {conta.agencia} | "
-            f"Conta: {conta.numero:04d} | "
-            f"Titular: {nome} ({conta.usuario_cpf})"
+            f"Agência: {info['agencia']} | "
+            f"Conta: {info['numero']:04d} | "
+            f"Titular: {nome} | "
+            f"Saldo: {formatar_moeda(info['saldo'])}"
         )
 
 
@@ -147,68 +190,55 @@ def listar_contas() -> None:
 # Operações bancárias
 # ==========================
 
-def saque(*, saldo: float, valor: float, extrato: List[str],
-          limite: float, numero_saques: int, limite_saques: int):
-    """Saque - argumentos apenas por nome (keyword-only)."""
-    if valor <= 0:
-        print("✗ Valor inválido para saque.")
-        return saldo, extrato, numero_saques
-
-    if valor > saldo:
-        print("✗ Operação negada. Saldo insuficiente.")
-        return saldo, extrato, numero_saques
-
-    if valor > limite:
-        print("✗ Operação negada. Valor excede o limite por saque.")
-        return saldo, extrato, numero_saques
-
-    if numero_saques >= limite_saques:
-        print("✗ Operação negada. Limite diário de saques atingido.")
-        return saldo, extrato, numero_saques
-
-    saldo -= valor
-    timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
-    extrato.append(f"[{timestamp}] Saque: -{formatar_moeda(valor)}")
-    numero_saques += 1
-    print("✓ Saque realizado com sucesso.")
-
-    return saldo, extrato, numero_saques
-
-
+@log_transacao("DEPÓSITO")
 def deposito(saldo: float, valor: float, extrato: List[str], /):
-    """Depósito - argumentos apenas posicionais (positional-only)."""
     if valor <= 0:
-        print("✗ Valor inválido para depósito.")
+        print("✗ Valor inválido.")
         return saldo, extrato
 
     saldo += valor
-    timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
-    extrato.append(f"[{timestamp}] Depósito: +{formatar_moeda(valor)}")
-    print("✓ Depósito realizado com sucesso.")
+    extrato.append(
+        f"[{datetime.now().strftime('%d/%m/%Y %H:%M')}] Depósito: +{formatar_moeda(valor)}"
+    )
+    print("✓ Depósito realizado.")
     return saldo, extrato
 
 
+@log_transacao("SAQUE")
+def saque(*, saldo: float, valor: float, extrato: List[str],
+          limite: float, numero_saques: int, limite_saques: int):
+    if valor <= 0 or valor > saldo or valor > limite or numero_saques >= limite_saques:
+        print("✗ Saque não permitido.")
+        return saldo, extrato, numero_saques
+
+    saldo -= valor
+    extrato.append(
+        f"[{datetime.now().strftime('%d/%m/%Y %H:%M')}] Saque: -{formatar_moeda(valor)}"
+    )
+    print("✓ Saque realizado.")
+    return saldo, extrato, numero_saques + 1
+
+
 def extrato_(saldo: float, /, *, extrato: List[str]):
-    """Extrato - saldo posicional, extrato keyword-only."""
     print("\n=========== EXTRATO ===========")
     if not extrato:
-        print("Não foram registradas movimentações.")
+        print("Sem movimentações.")
     else:
-        for linha in extrato:
+        for linha in gerador_transacoes(extrato):
             print(linha)
     print(f"\nSaldo atual: {formatar_moeda(saldo)}")
-    print("================================\n")
+    print("==============================\n")
 
 
 # ==========================
-# Fluxo de operações em conta
+# Fluxo de operações
 # ==========================
 
 def selecionar_conta_existente() -> Optional[ContaCorrente]:
     try:
-        numero = int(input("Número da conta: ").strip())
+        numero = int(input("Número da conta: "))
     except ValueError:
-        print("✗ Número de conta inválido.")
+        print("✗ Número inválido.")
         return None
 
     conta = encontrar_conta_por_numero(numero)
@@ -217,33 +247,19 @@ def selecionar_conta_existente() -> Optional[ContaCorrente]:
     return conta
 
 
-def operacao_deposito() -> None:
-    print("\n=== Depósito ===")
+def operacao_deposito():
     conta = selecionar_conta_existente()
     if not conta:
         return
-
-    try:
-        valor = float(input("Valor do depósito: ").replace(",", "."))
-    except ValueError:
-        print("✗ Valor inválido.")
-        return
-
+    valor = float(input("Valor: ").replace(",", "."))
     conta.saldo, conta.extrato = deposito(conta.saldo, valor, conta.extrato)
 
 
-def operacao_saque() -> None:
-    print("\n=== Saque ===")
+def operacao_saque():
     conta = selecionar_conta_existente()
     if not conta:
         return
-
-    try:
-        valor = float(input("Valor do saque: ").replace(",", "."))
-    except ValueError:
-        print("✗ Valor inválido.")
-        return
-
+    valor = float(input("Valor: ").replace(",", "."))
     conta.saldo, conta.extrato, conta.num_saques = saque(
         saldo=conta.saldo,
         valor=valor,
@@ -254,13 +270,10 @@ def operacao_saque() -> None:
     )
 
 
-def operacao_extrato() -> None:
-    print("\n=== Extrato ===")
+def operacao_extrato():
     conta = selecionar_conta_existente()
-    if not conta:
-        return
-
-    extrato_(conta.saldo, extrato=conta.extrato)
+    if conta:
+        extrato_(conta.saldo, extrato=conta.extrato)
 
 
 # ==========================
@@ -268,45 +281,36 @@ def operacao_extrato() -> None:
 # ==========================
 
 def menu() -> str:
-    return dedent(
-        """
-        ───────────────────────────────
-              PyBank Next  💳
-        ───────────────────────────────
-        [1] Criar usuário
-        [2] Criar conta corrente
-        [3] Listar contas
-        [4] Depósito
-        [5] Saque
-        [6] Extrato
-        [0] Sair
-        ───────────────────────────────
-        Escolha uma opção: """
-    )
+    return dedent("""
+    ───────────────────────────────
+          PyBank Next
+    ───────────────────────────────
+    [1] Criar usuário
+    [2] Criar conta
+    [3] Listar contas
+    [4] Depósito
+    [5] Saque
+    [6] Extrato
+    [0] Sair
+    ───────────────────────────────
+    Escolha: """)
 
 
-def main() -> None:
+def main():
     while True:
         opcao = input(menu()).strip()
-
         match opcao:
-            case "1":
-                criar_usuario()
-            case "2":
-                criar_conta_corrente()
-            case "3":
-                listar_contas()
-            case "4":
-                operacao_deposito()
-            case "5":
-                operacao_saque()
-            case "6":
-                operacao_extrato()
+            case "1": criar_usuario()
+            case "2": criar_conta_corrente()
+            case "3": listar_contas()
+            case "4": operacao_deposito()
+            case "5": operacao_saque()
+            case "6": operacao_extrato()
             case "0":
-                print("Encerrando PyBank Next. Até logo!")
+                print("Encerrando o sistema.")
                 break
             case _:
-                print("✗ Opção inválida, tente novamente.")
+                print("✗ Opção inválida.")
 
 
 if __name__ == "__main__":
