@@ -1,0 +1,39 @@
+Este projeto é uma API bancária assíncrona em FastAPI que simula operações básicas de uma conta corrente, seguindo o desafio “API Bancária Assíncrona com FastAPI” da trilha Python DIO. A aplicação expõe endpoints REST protegidos por autenticação JWT para cadastro de usuários, criação de contas, lançamento de transações (depósito e saque) e consulta de extrato.
+​
+
+Objetivo do projeto
+Demonstrar o uso de FastAPI em modo assíncrono para construir uma API moderna, performática e fácil de escalar.
+​
+
+Modelar entidades bancárias (usuário, conta, transação) com SQLAlchemy, garantindo relacionamentos corretos e persistência em banco SQLite.
+
+Aplicar conceitos de segurança por meio de autenticação com JWT, permitindo que apenas usuários autenticados acessem as operações financeiras.
+​
+
+Funcionalidades principais
+Cadastro de usuários (POST /auth/signup): cria um usuário com senha criptografada usando passlib.
+
+Login e geração de token JWT (POST /auth/token): recebe usuário/senha via formulário, valida credenciais e retorna access_token para uso nos demais endpoints protegidos.
+
+Criação de contas (POST /contas/): vincula uma conta a um usuário autenticado, com número único e saldo inicial zero.
+
+Depósito e saque (POST /contas/{numero}/deposito e /saque): registram transações de crédito e débito, validando valores positivos e saldo suficiente para saque.
+
+Extrato bancário (GET /contas/{numero}/extrato): retorna a conta e a lista de transações (tipo, valor e data), funcionando como histórico de operações.
+
+Tecnologias e arquitetura
+FastAPI para definição dos endpoints, injeção de dependências e documentação automática via Swagger/OpenAPI.
+​
+
+SQLAlchemy para mapeamento objeto-relacional (ORM) das tabelas usuarios, contas e transacoes, com banco local SQLite.
+
+Pydantic v2 para validação e serialização dos modelos de entrada/saída, incluindo regras como valor positivo das transações.
+
+JWT (python-jose) para autenticação baseada em tokens, integrando com OAuth2PasswordBearer e fluxo password grant.
+​
+
+Aprendizados envolvidos
+Implementação de APIs assíncronas com rotas protegidas e tratamento de erros HTTP.
+
+Boas práticas de separação em módulos (database, models, schemas, security, main) inspiradas em exemplos da comunidade e da trilha Python DIO.
+​
